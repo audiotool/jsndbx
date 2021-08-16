@@ -216,6 +216,7 @@ const loadInstrument = instrument => {
     console.log(`${samples.length} samples allocating ${totalBytes >> 20}mb`)
 };
 readBinary(url)
+    .catch(x => alert(x))
     .then(bf => SoundFont2.from(new Uint8Array(bf)))
     .then(sf => {
         Promise.all([
