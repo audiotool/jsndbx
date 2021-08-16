@@ -7,4 +7,4 @@
 * [Space Synthesiser Prototype](space-prototype.html)
 
 ### work in progress (might not work online)
-* [Fixed Sampler (SoundFont)](fixam.html)
+* [Fixed Sampler (SoundFont)](404)
