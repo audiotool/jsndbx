@@ -1,6 +1,9 @@
 # jsndbx
 #### Javascript Prototyping Sandbox
 
-* Euclidean Rhythms
-* Space Synthesiser Prototype
-* Fixed Sampler (SoundFont)
+### working prototypes
+* [Euclidean Rhythms](euclidean.html)
+* [Space Synthesiser Prototype](space-prototype.html)
+
+### work in progress
+* [Fixed Sampler (SoundFont)](fixam.html)
