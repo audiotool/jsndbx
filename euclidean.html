@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Euclidean</title>
+    <link rel="stylesheet" href="styles.css">
+    <script type="module">
+        import {Policy} from "./modules/policy.js";
+        import {GrooveShuffle, Fragmentation, Sequencer} from "./modules/sequencing.js";
+        import {EuclideanSteps, ParameterField} from "./modules/editors.js";
+        import {Euclidean} from "./modules/euclidean.js";
+        import {readAudio, replaceElement} from "./modules/standard.js";
+        import {MidiData} from "./modules/sequencing.js";
+
+        const root = document.querySelector("div#steps");
+        const channelList = document.createElement("div");
+        channelList.style.display = "grid";
+        channelList.style.gridTemplateColumns = "144px 144px 144px 144px";
+        channelList.style.gridRowGap = "32px";
+        channelList.style.gridColumnGap = "32px";
+        root.appendChild(channelList);
+
+        const numChannels = 12;
+        const channels = [];
+        const channelElements = [];
+        for (let i = 0; i < numChannels; i++) {
+            const euclidean = channels[i] = new Euclidean();
+            const euclideanSteps = channelElements[i] = new EuclideanSteps(euclidean);
+            channelList.appendChild(euclideanSteps.domElement);
+        }
+        channels[0].parameterPulses.value = 4;
+
+        document.querySelector("button#randomise").onclick = ignore => {
+            for (let i = 1; i < numChannels; i++) {
+                channelElements[i].random();
+            }
+        };
+
+        const setupMidi = () => {
+            for (let i = 0; i < numChannels; i++) {
+                channelElements[i].name = "Note " + (i + 36);
+            }
+            return navigator.requestMIDIAccess().then(midi => {
+                const output = midi.outputs.get("1752208568");
+                if (null === output) {
+                    alert("Could not found 'Pro14 MIDI device'!");
+                    return;
+                }
+                return {
+                    sender: (index, velocity, millis) => {
+                        const channel = 9;
+                        output.send(MidiData.noteOn(channel, 36 + index, velocity), millis);
+                        output.send(MidiData.noteOff(channel, 36 + index), millis + 100);
+                    },
+                    timer: () => performance.now()
+                };
+            });
+        };
+        const setup808 = () => {
+            const context = Policy.newAudioContext();
+            const fileNames = [
+                "./files/808/bassdrum.ogg",
+                "./files/808/snaredrum.ogg",
+                "./files/808/rim.ogg",
+                "./files/808/clave.ogg",
+                "./files/808/clap.ogg",
+                "./files/808/low-tom.ogg",
+                "./files/808/mid-tom.ogg",
+                "./files/808/high-tom.ogg",
+                "./files/808/closed-hat.ogg",
+                "./files/808/open-hat.ogg",
+                "./files/808/cymbal.ogg",
+                "./files/808/cowbell.ogg",
+            ];
+            const niceNames = fileNames.map(x => {
+                x = x.replace(/^.*[\\\/]/, '');
+                x = x.substring(0, x.lastIndexOf("."));
+                x = x.charAt(0).toUpperCase() + x.substring(1);
+                return x.replace("-", " ");
+            });
+            for (let i = 0; i < niceNames.length; i++) {
+                channelElements[i].name = niceNames[i];
+            }
+            return Promise.all(fileNames.map(fileName => readAudio(context, fileName)))
+                .then(buffers => {
+                    return {
+                        sender: (index, velocity, millis) => {
+                            const gainNode = context.createGain();
+                            gainNode.gain.value = velocity / 127.0;
+                            const sourceNode = context.createBufferSource();
+                            sourceNode.buffer = buffers[index];
+                            sourceNode.connect(gainNode).connect(context.destination);
+                            sourceNode.start(millis / 1000.0);
+                        },
+                        timer: () => context.currentTime * 1000.0
+                    };
+                });
+        };
+        // Either or ...
+        // setupMidi()
+        setup808()
+            .then(setup => {
+                const sequencer = new Sequencer(setup.timer);
+                const groove = new GrooveShuffle();
+                const fragmentation = new Fragmentation((computeStartMillis, stepIndex, position) => {
+                    const millis = computeStartMillis(position);
+                    for (let index = 0; index < numChannels; index++) {
+                        channelElements[index].highlight(stepIndex);
+                        if (channels[index].getStepAt(stepIndex)) {
+                            setup.sender(index, 127, millis);
+                        }
+                    }
+                }, 1.0 / 16.0);
+                fragmentation.groove = groove;
+                sequencer.addProcessor((sequencer, t0, t1) => fragmentation.equalise(sequencer, t0, t1));
+
+                document.querySelector("input#play").onchange = event =>
+                    sequencer.playMode(event.target.checked);
+                replaceElement(new ParameterField(groove.impact).domElement,
+                    document.querySelector("div#groove-impact"));
+            });
+    </script>
+</head>
+<body>
+<header>
+    <h1>Klangwerk</h1>
+    <h2>Euclidean Patterns</h2>
+</header>
+<article class="center">
+    <div>
+        <div style="display: flex; height: 64px; align-items: center; margin-bottom: 16px;">
+            <input type="checkbox" id="play">
+            <label for="play">Play</label>
+            <button id="randomise">Randomise</button>
+            <div id="groove-impact"></div>
+        </div>
+        <div id="steps"></div>
+    </div>
+</article>
+<footer></footer>
+</body>
+</html>

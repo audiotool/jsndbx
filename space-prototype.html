@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Pad Prototype</title>
+    <link rel="stylesheet" href="styles.css">
+    <script type="module">
+        import {Policy} from "./modules/policy.js";
+        import {Midi, SoftwareKeyboard} from "./modules/sequencing.js";
+        import {StereoMeter} from "./worklets/StereoMeter.js";
+        import {PadDisplay} from "./modules/pad-display.js";
+        import {AdsrEnvelopeEditor, ParameterKnob} from "./modules/editors.js";
+        import {PadSynth, PadWorker} from "./worklets/PadSynth.js";
+
+        const context = Policy.newAudioContext();
+        const sampleRate = context.sampleRate;
+        const worker = new PadWorker(16, sampleRate, 60.0);
+
+        const createSpacer = () => {
+            const element = document.createElement("div");
+            element.style.height = "8px";
+            return element;
+        };
+        const createSoundEditor = (sound, other) => {
+            const parent = document.createElement("div");
+            parent.style.width = "228px";
+            const header = document.createElement("h5");
+            parent.style.margin = "0 4px 0 0";
+            header.style.borderBottom = "4px solid #28E5FF";
+            header.textContent = "Sound " + sound.name;
+            parent.appendChild(header);
+            const display = new PadDisplay(sound).domElement;
+            display.style.marginTop = "4px";
+            parent.appendChild(display);
+            const gridA = document.createElement("div");
+            gridA.style.display = "grid";
+            gridA.style.gridTemplateColumns = "auto auto auto";
+            parent.appendChild(gridA);
+            gridA.appendChild(new ParameterKnob(sound.bandWidth).domElement);
+            gridA.appendChild(new ParameterKnob(sound.bandWidthScale).domElement);
+            gridA.appendChild(new ParameterKnob(sound.brightness, 0.5).domElement);
+            gridA.appendChild(new ParameterKnob(sound.metal).domElement);
+            gridA.appendChild(new ParameterKnob(sound.distance).domElement);
+            gridA.appendChild(new ParameterKnob(sound.numHarmonics).domElement);
+            parent.appendChild(createSpacer());
+            const gridB = document.createElement("div");
+            gridB.style.display = "grid";
+            gridB.style.gridTemplateColumns = "auto auto auto";
+            parent.appendChild(gridB);
+            gridB.appendChild(new ParameterKnob(sound.notchAmount).domElement);
+            gridB.appendChild(new ParameterKnob(sound.notchFrequency).domElement);
+            gridB.appendChild(new ParameterKnob(sound.notchWidth).domElement);
+            const buttons = document.createElement("div");
+            buttons.style.display = "flex";
+            buttons.style.flexDirection = "row";
+            buttons.style.justifyContent = "space-around";
+            buttons.appendChild(createButton("Randomize", () => {
+                sound.randomize();
+            }));
+            buttons.appendChild(createButton("Reset", () => {
+                sound.reset();
+            }));
+            buttons.appendChild(createButton("Copy to " + other.name, () => {
+                sound.copyTo(other);
+            }));
+            parent.appendChild(buttons);
+            return parent;
+        };
+        const createPresetEditor = (preset, title) => {
+            const parent = document.createElement("div");
+            parent.style.width = "380px";
+            parent.style.margin = "0 4px 0 0";
+            const header = document.createElement("h5");
+            header.style.margin = "0";
+            header.style.borderBottom = "4px solid #28E5FF";
+            header.textContent = title;
+            const grid = document.createElement("div");
+            grid.style.display = "grid";
+            grid.style.gridTemplateColumns = "auto auto auto auto auto";
+            grid.appendChild(new ParameterKnob(preset.masterVolume).domElement);
+            grid.appendChild(new ParameterKnob(preset.stereo, 0.5).domElement);
+            grid.appendChild(new ParameterKnob(preset.tune, 0.5).domElement);
+            grid.appendChild(new ParameterKnob(preset.tuneA, 0.5).domElement);
+            grid.appendChild(new ParameterKnob(preset.tuneB, 0.5).domElement);
+            grid.appendChild(new ParameterKnob(preset.blendAB, 0.5).domElement);
+            grid.appendChild(new ParameterKnob(preset.lfoToBlend).domElement);
+            grid.appendChild(new ParameterKnob(preset.lfoToVolume).domElement);
+            grid.appendChild(new ParameterKnob(preset.lfoToPitch).domElement);
+            grid.appendChild(new ParameterKnob(preset.lfoPanAmount).domElement);
+            grid.appendChild(new ParameterKnob(preset.envBToBlend).domElement);
+            grid.appendChild(new ParameterKnob(preset.envBToPitch).domElement);
+            grid.appendChild(new ParameterKnob(preset.envBToLfoRate, 0.5).domElement);
+            grid.appendChild(new ParameterKnob(preset.envBToLfoAmount, 0.5).domElement);
+            grid.appendChild(new ParameterKnob(preset.velocityToVolume).domElement);
+            grid.appendChild(new ParameterKnob(preset.velocityToBlend).domElement);
+            grid.appendChild(new ParameterKnob(preset.keyboardToBlend, 0.5).domElement);
+            parent.appendChild(header);
+            parent.appendChild(grid);
+            return parent;
+        };
+
+        const createLfoEditor = (format, title) => {
+            const parent = document.createElement("div");
+            parent.style.width = "152px";
+            parent.style.margin = "0";
+            const header = document.createElement("h5");
+            header.style.margin = "0";
+            header.style.borderBottom = "4px solid #28E5FF";
+            header.textContent = title;
+            const grid = document.createElement("div");
+            grid.style.display = "grid";
+            grid.style.gridTemplateColumns = "auto auto";
+            grid.appendChild(new ParameterKnob(format.shape).domElement);
+            grid.appendChild(new ParameterKnob(format.period).domElement);
+            grid.appendChild(new ParameterKnob(format.phase).domElement);
+            grid.appendChild(new ParameterKnob(format.retrigger).domElement);
+            parent.appendChild(header);
+            parent.appendChild(grid);
+            return parent;
+        };
+        const createEnvelopeEditor = (envelope, title, modulation) => {
+            const parent = document.createElement("div");
+            parent.style.margin = modulation ? "8px 0 8px 8px" : "8px 0";
+            parent.style.borderRadius = "4px";
+            const header = document.createElement("h5");
+            header.style.margin = "0 0 8px 0";
+            header.style.borderBottom = "4px solid #28E5FF";
+            header.textContent = title;
+            parent.appendChild(header);
+            parent.appendChild(new AdsrEnvelopeEditor(envelope, 304, {releaseEnabledChangeable: modulation}).domElement);
+            return parent;
+        };
+        const createButton = (text, callback) => {
+            const button = document.createElement("button");
+            button.textContent = text;
+            button.onclick = ignore => callback();
+            return button;
+        };
+
+        Promise.all([
+            context.audioWorklet.addModule("./worklets/StereoMeterProcessor.js"),
+            context.audioWorklet.addModule("./worklets/PadSynthProcessor.js")
+        ]).then(_ => {
+            const synth = new PadSynth(context, worker);
+            const meter = new StereoMeter(context, 440);
+            synth.connect(meter);
+            meter.connect(context.destination);
+
+            const meterElement = meter.domElement;
+            meterElement.style.marginLeft = "auto";
+            const switchSoundsButton = document.createElement("button");
+            switchSoundsButton.textContent = "A <> B";
+            switchSoundsButton.style.margin = "8px 0";
+            switchSoundsButton.style.width = "616px";
+            switchSoundsButton.onclick = ignore => synth.switchSounds();
+            const root = document.querySelector("div#root");
+            root.style.display = "flex";
+            root.style.flexDirection = "column";
+            const soundEditor = document.createElement("div");
+            soundEditor.style.display = "flex";
+            soundEditor.appendChild(createSoundEditor(synth.soundA, synth.soundB));
+            soundEditor.appendChild(createSoundEditor(synth.soundB, synth.soundA));
+            soundEditor.appendChild(createPresetEditor(synth.presetFormat, "Preset"));
+            soundEditor.appendChild(createLfoEditor(synth.lfoFormat, "LFO"));
+            soundEditor.appendChild(meterElement);
+            root.appendChild(soundEditor);
+            const envelopeEditor = document.createElement("div");
+            envelopeEditor.style.display = "flex";
+            envelopeEditor.style.width = "616px";
+            envelopeEditor.style.flexDirection = "row";
+            envelopeEditor.style.justifyContent = "space-between";
+            envelopeEditor.appendChild(createEnvelopeEditor(synth.envFormatA, "Envelope Amplitude", false));
+            envelopeEditor.appendChild(createEnvelopeEditor(synth.envFormatB, "Envelope Modulation", true));
+            root.appendChild(switchSoundsButton);
+            root.appendChild(envelopeEditor);
+
+            Midi.request().then(midi => {
+                const events = Midi.mapAllEvents(midi);
+                events.onNoteOn = (note, velocity) => synth.noteOn(note, velocity);
+                events.onNoteOff = (note) => synth.noteOff(note);
+            });
+            SoftwareKeyboard.init((note, velocity) => synth.noteOn(note, velocity), note => synth.noteOff(note));
+        });
+    </script>
+</head>
+<body>
+<header>
+    <h1>Klangwerk</h1>
+    <h2>SPACE Prototyping</h2>
+</header>
+<article>
+    <div id="root"></div>
+</article>
+<footer></footer>
+</body>
+</html>

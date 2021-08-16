@@ -1,0 +1,416 @@
+/* open-sans-regular - latin */
+@font-face {
+  font-family: 'Open Sans';
+  font-style: normal;
+  font-weight: 400;
+  src: local('Open Sans Regular'), local('OpenSans-Regular'),
+  url('files/font/open-sans-v15-latin-regular.woff2') format('woff2'),
+  url('files/font/open-sans-v15-latin-regular.woff') format('woff');
+}
+
+.hidden {
+  display: none;
+}
+
+html, body {
+  font-family: "Open Sans", sans-serif;
+  color: #eeeeee;
+  background-color: #101010;
+
+  // debugging //
+  height: 100%;
+  padding: 24px;
+  margin: 0;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  width: auto;
+  & header {
+    height: 32px;
+    display: flex;
+    flex-direction: row;
+    user-select: none;
+    background-color: #28E5FF;
+    border-radius: 16px;
+    padding: 0 20px;
+    margin: 0 0 32px 0;
+    & h1 {
+      color: #28E5FF;
+      font-size: 42px;
+      line-height: 30px;
+      font-weight: bold;
+      padding: 0 16px;
+      background-color: black;
+    }
+    & h2 {
+      color: black;
+      font-size: 24px;
+      line-height: 32px;
+      padding: 0 16px;
+    }
+    & h1, h2 {
+      margin: 0;
+      text-transform: uppercase;
+      display: inline-block;
+    }
+  }
+  & article {
+    width: 100%;
+    flex: 1;
+    position: relative;
+    &.center {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+  }
+  & footer {
+    color: #28E5FF;
+    user-select: none;
+    &:before {
+      content: "❤";
+      margin-right: 12px;
+    }
+  }
+}
+
+pre {
+  display: block;
+  font-size: 20px;
+  color: #AAA;
+  user-select: none;
+}
+
+ul.list {
+  margin-top: 64px;
+  & li {
+    color: #FFF;
+    font-size: 40px;
+    visibility: hidden;
+  }
+}
+
+.funkEntry {
+  font-size: 10px;
+  user-select: none;
+  color: darkgray;
+  &:hover {
+    color: aqua;
+  }
+  &:active {
+    color: aqua;
+  }
+}
+
+.tooltip {
+  position: relative;
+  &.text {
+    visibility: hidden;
+    pointer-events: none;
+    width: 160px;
+    background-color: rgba(0, 0, 0, 0.5);
+    color: #fff;
+    text-align: left;
+    border-radius: 2px;
+    padding: 4px 2px;
+    position: absolute;
+    top: 12px;
+    left: 24px;
+    z-index: 1;
+  }
+
+  &:hover .text {
+    visibility: visible;
+  }
+}
+
+audio {
+  display: block;
+}
+
+canvas {
+  user-select: none;
+}
+
+.center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+p {
+  font-size: 11px;
+  color: #888;
+}
+
+button {
+  font-family: "Open Sans", sans-serif;
+  color: #19404d;
+  background-color: #28E5FF;
+  border: none;
+  border-radius: 1px;
+  margin: 2px 4px 2px 0;
+  height: 18px;
+  font-weight: bold;
+  padding: 2px 8px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 10px;
+  outline: transparent;
+  text-transform: uppercase;
+  cursor: pointer;
+  &.toggle {
+    color: #28E5FF;
+    background-color: #19404d;
+    &:active {
+      color: #19404d;
+      background-color: #28E5FF;
+    }
+    &.active {
+      color: #19404d;
+      background-color: #28E5FF;
+    }
+  }
+  &:active {
+    color: #28E5FF;
+    background-color: #19404d;
+  }
+}
+
+label {
+  font-size: 10px;
+  line-height: 11px;
+  user-select: none;
+  color: #28E5FF;
+  vertical-align: middle;
+  height: auto;
+  margin: 0;
+  padding: 0;
+}
+
+input[type="checkbox"] {
+  width: 14px;
+  height: 14px;
+  position: relative;
+  vertical-align: middle;
+  background-color: #19404d;
+  border-radius: 7px;
+  -webkit-appearance: none;
+  outline: none;
+  & + label {
+    color: #28E5FF;
+    font-size: 10px;
+    padding: 0 1px;
+    margin: 0 12px 0 0;
+    position: relative;
+    font-weight: bold;
+  }
+  &:checked {
+    background-color: #28E5FF;
+  }
+  &:not(:first-child) {
+    margin-left: 16px;
+  }
+}
+
+form {
+  margin: 0;
+  padding: 0;
+}
+
+input[type="radio"] {
+  position: relative;
+  display: none;
+  margin: 0;
+  padding: 0;
+  outline: none;
+  user-select: none;
+  & + label {
+    text-rendering: geometricPrecision;
+    color: #28E5FF;
+    background-color: #19404d;
+    margin: 0 1px 0 0;
+    font-weight: normal;
+    padding: 0 12px;
+    line-height: 18px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    outline: transparent;
+    cursor: pointer;
+    font-size: 10px;
+    height: 18px;
+    &:first-of-type {
+      border-radius: 9px 1px 1px 9px;
+    }
+    &:last-of-type {
+      border-radius: 1px 9px 9px 1px;
+    }
+  }
+  &:checked {
+    & + label {
+      color: #19404d;
+      background-color: #28E5FF;
+    }
+  }
+}
+
+.value-input {
+  font-size: 11px;
+  outline: none;
+  border: 1px #28E5FF solid;
+  color: #28E5FF;
+  background-color: #1f545c;
+  padding: 4px;
+}
+
+.panel {
+  display: flex;
+  top: 50%;
+  left: 50%;
+  position: absolute;
+  transform: translate(-50%, -50%);
+}
+
+input[type="range"] {
+  -webkit-appearance: none;
+  background: #333;
+  outline: none;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 10px;
+  height: 10px;
+  background: #eee;
+}
+
+code {
+  font-size: 10px;
+  white-space: pre;
+  line-height: 11px;
+}
+
+h1 {
+  font-size: 48px;
+}
+
+h2 {
+  color: #CCC;
+}
+
+h1, h2, h3, h4, h5 {
+  margin: 0 0 8px 0;
+  padding: 0;
+}
+
+h5 {
+  font-weight: normal;
+}
+
+@keyframes policy {
+  from {
+    top: -24px;
+  }
+  to {
+    top: 0;
+  }
+}
+
+.policy {
+  width: 100%;
+  height: 24px;
+  top: 0;
+  left: 0;
+  font-size: 14px;
+  font-weight: bold;
+  line-height: 24px;
+  color: black;
+  background-color: white;
+  text-align: center;
+  position: absolute;
+  user-select: none;
+  animation-name: policy;
+  animation-duration: 1s;
+}
+
+.record {
+  width: 96px;
+  height: 96px;
+  border-radius: 48px;
+  position: relative;
+  cursor: pointer;
+  color: white;
+  &::after {
+    font-size: 16px;
+    font-weight: bold;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    white-space: nowrap;
+  }
+  &.idle {
+    &::after {
+      content: "START";
+    }
+    background-color: #FF3333;
+  }
+  &.creating {
+    &::after {
+      content: "STOP";
+    }
+    background-color: #FF3333;
+  }
+  &.waiting {
+    &::after {
+      content: "WAITING";
+    }
+    background-color: #FF9933;
+  }
+  &.recording {
+    &::after {
+      content: "RECORDING";
+    }
+    background-color: #FF3333;
+  }
+  &.new-track {
+    &::after {
+      content: "NEW TRACK";
+    }
+    background-color: #FF3333;
+  }
+}
+
+ul {
+  font-size: 24px;
+  color: gray;
+  li {
+    &.default {
+      color: white;
+    }
+  }
+}
+
+@keyframes subject {
+  0%, 100% {
+    opacity: 0.0;
+  }
+  25%, 75% {
+    opacity: 1.0;
+  }
+}
+
+div.subject-header {
+  font-family: "Amatic SC", serif;
+  font-size: 96px;
+  opacity: 0.0;
+  animation-name: subject;
+  animation-duration: 4s;
+  animation-timing-function: ease-out;
+}
