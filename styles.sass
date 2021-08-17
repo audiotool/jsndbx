@@ -8,6 +8,37 @@
 .hidden
   display: none
 
+.sampler
+  display: flex
+  flex-direction: row
+  overflow: hidden
+  *
+    border-radius: 8px
+  h5
+    padding: 8px 0
+    text-align: center
+    background-color: #333
+    border-radius: 6px 6px 0 0
+  .source
+    flex: 0 0 256px
+    height: 100%
+    background-color: #1A1A1A
+    select
+      width: 100%
+  .editor
+    margin: 0 0 0 2px
+    display: flex
+    flex-direction: column
+    flex: 1 0 0
+    height: 100%
+    .samples
+      flex: 0 0 320px
+      background-color: #1A1A1A
+      margin: 0 0 2px 0
+    .parameters
+      flex: 1 0 0
+      background-color: #1A1A1A
+
 html, body
   font-family: "Open Sans", sans-serif
   color: #eeeeee
@@ -380,3 +411,14 @@ div.subject-header
   animation-name: subject
   animation-duration: 4s
   animation-timing-function: ease-out
+
+hr
+  height: 1px
+  background-color: white
+  border: transparent
+
+select
+  outline: none
+  color: white
+  background-color: #333
+  border: transparent
