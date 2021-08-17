@@ -7,5 +7,5 @@
 ### working prototypes
 * [Euclidean Rhythms](euclidean.html)
 * [Space Synthesiser Prototype](space-prototype.html)
-
-... to be continued
+### work in progress
+* [Sampler](sampler.html)
