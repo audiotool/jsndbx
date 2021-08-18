@@ -20,6 +20,7 @@
   * loop enabled
   * root note
   * root fine-tune
+  * flac
   * format
 * Preset editor
 * Implement DSP
