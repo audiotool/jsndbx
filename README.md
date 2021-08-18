@@ -5,12 +5,12 @@
 
 ## Sampler
 
-####Links
+#### Links
 * [Sampler prototype](https://audiotool.github.io/jsndbx/sampler.html)
 * [Download soundfont starter-pack (332.3MB)](https://www.andremichelle.io/audiotool/sf2.zip)
 * [Cymatics soundfonts](https://cymatics.fm/blogs/production/soundfonts)
 
-####Todo
+#### Todo
 * ~~Import soundfont~~
 * ~~Test playback~~
 * Sample editor
