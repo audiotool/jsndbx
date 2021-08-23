@@ -36,7 +36,7 @@ class Sample {
 
     play(output, note) {
         const keyDifference = note - this.rootKey;
-        const playbackRate = Math.pow(2.0, keyDifference / 12.0); // TODO rootFineTune
+        const playbackRate = Math.pow(2.0, keyDifference / 12.0 + this.rootFineTune / 1200.0);
         const gain = context.createGain();
         const source = context.createBufferSource();
         const startTime = context.currentTime;
@@ -88,10 +88,10 @@ class SampleBuilder {
         const samples = [];
         for (let i = 0; i < zones.length; i++) {
             const zone = zones[i];
-            const lowestKey = zone.keyRange?.lo;
+            let lowestKey = zone.keyRange?.lo;
             if (lowestKey === undefined) {
                 console.warn(`${instrument.header.name} zone ${i} has no keyRange.`);
-                return;
+                lowestKey = 0;
             }
             const sample = zone.sample;
             const header = sample.header;
@@ -143,8 +143,8 @@ class SampleBuilder {
         const header = this.samples[0].header;
         const sampleRate = header.sampleRate;
         const rootKey = header.originalPitch;
-        const rootFineTune = 0; // TODO
-        const lowestKey = this.zone.keyRange.lo;
+        const rootFineTune = header.pitchCorrection;
+        const lowestKey = this.zone.keyRange?.lo | 0;
         const loopStart = header.startLoop - header.start;
         const loopEnd = header.endLoop - header.start;
         const loopEnabled = this.zone.generators[54]?.amount === 1;
