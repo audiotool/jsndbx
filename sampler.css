@@ -1,0 +1,16 @@
+table#sample-list {
+  font-size: 9px;
+}
+table#sample-list td {
+  padding-left: 4px;
+  background-color: #111;
+}
+table#sample-list th {
+  background-color: #333;
+  text-align: left;
+  padding-left: 4px;
+  padding-right: 20px;
+  border-radius: 2px;
+}
+
+/*# sourceMappingURL=sampler.css.map */

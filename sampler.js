@@ -6,6 +6,11 @@ const masterGain = context.createGain();
 masterGain.gain.value = 0.5;
 masterGain.connect(context.destination);
 
+window.onerror = event => {
+    console.log(event);
+    alert(`An error occurred. Please reload.`);
+};
+
 class SampleType {
 }
 
@@ -14,11 +19,13 @@ SampleType.Right = 2; // A sample with two channels, where this sample is the ri
 SampleType.Left = 4; // A sample with two channels, where this sample is the left channel.
 
 class Sample {
-    constructor(data, sampleRate, lowestKey, rootNote, rootFineTune, loopStart, loopEnd, loopEnabled) {
+    constructor(name, data, numFrames, sampleRate, lowestKey, rootKey, rootFineTune, loopStart, loopEnd, loopEnabled) {
+        this.name = name;
         this.data = data;
+        this.numFrames = numFrames | 0;
         this.sampleRate = sampleRate | 0;
         this.lowestKey = lowestKey | 0;
-        this.rootNote = rootNote | 0;
+        this.rootKey = rootKey | 0;
         this.rootFineTune = rootFineTune | 0;
         this.loopStart = loopStart | 0;
         this.loopEnd = loopEnd | 0;
@@ -28,9 +35,7 @@ class Sample {
     }
 
     play(output, note) {
-        const l0 = this.loopStart;
-        const l1 = this.loopEnd;
-        const keyDifference = note - this.rootNote;
+        const keyDifference = note - this.rootKey;
         const playbackRate = Math.pow(2.0, keyDifference / 12.0); // TODO rootFineTune
         const gain = context.createGain();
         const source = context.createBufferSource();
@@ -43,8 +48,8 @@ class Sample {
         source.playbackRate.value = playbackRate;
         if (this.loopEnabled) {
             const sampleRate = this.sampleRate;
-            source.loopStart = l0 / sampleRate;
-            source.loopEnd = l1 / sampleRate;
+            source.loopStart = this.loopStart / sampleRate;
+            source.loopEnd = this.loopEnd / sampleRate;
             source.loop = true;
         }
         source.start(startTime);
@@ -64,9 +69,8 @@ class Sample {
             this.lazyBuffer = context.createBuffer(numChannels, this.data[0].length, this.sampleRate);
             for (let channelIndex = 0; channelIndex < numChannels; channelIndex++) {
                 const shortArray = this.data[channelIndex];
-                const numFrames = shortArray.length;
-                const floatArray = new Float32Array(numFrames);
-                for (let frameIndex = 0; frameIndex < numFrames; frameIndex++) {
+                const floatArray = new Float32Array(this.numFrames);
+                for (let frameIndex = 0; frameIndex < this.numFrames; frameIndex++) {
                     floatArray[frameIndex] = shortArray[frameIndex] / 0x7FFF;
                 }
                 this.lazyBuffer.copyToChannel(floatArray, channelIndex, 0);
@@ -78,7 +82,7 @@ class Sample {
 
 class SampleBuilder {
     static fromInstrument(instrument) {
-        console.log(`load ${instrument.header.name}`);
+        console.log(`build ${instrument.header.name}`);
         const zones = instrument.zones;
         const sampleBuilders = new Map();
         const samples = [];
@@ -138,7 +142,7 @@ class SampleBuilder {
         console.assert(this.samples.length > 0);
         const header = this.samples[0].header;
         const sampleRate = header.sampleRate;
-        const rootNote = header.originalPitch;
+        const rootKey = header.originalPitch;
         const rootFineTune = 0; // TODO
         const lowestKey = this.zone.keyRange.lo;
         const loopStart = header.startLoop - header.start;
@@ -147,14 +151,16 @@ class SampleBuilder {
         const type = this.type();
         if (type === SampleType.Mono || type === SampleType.Left || type === SampleType.Right) {
             if (this.samples.length > 1) console.warn("Mono sample has more than one channel");
-            return new Sample([this.samples[0].data],
-                sampleRate, lowestKey, rootNote, rootFineTune, loopStart, loopEnd, loopEnabled);
+            const numFrames = header.end - header.start;
+            return new Sample(header.name, [this.samples[0].data], numFrames,
+                sampleRate, lowestKey, rootKey, rootFineTune, loopStart, loopEnd, loopEnabled);
         }
         if (type === (SampleType.Left | SampleType.Right)) {
             console.assert(this.samples.length === 2);
             console.assert(header.sampleRate === this.samples[1].header.sampleRate);
-            return new Sample([this.samples[0].data, this.samples[1].data],
-                sampleRate, lowestKey, rootNote, rootFineTune, loopStart, loopEnd, loopEnabled);
+            const numFrames = Math.max(header.end - header.start, this.samples[1].header.end - this.samples[1].header.start);
+            return new Sample(header.name, [this.samples[0].data, this.samples[1].data], numFrames,
+                sampleRate, lowestKey, rootKey, rootFineTune, loopStart, loopEnd, loopEnabled);
         }
         throw new Error(`Unknown audio configuration (${type})`);
     }
@@ -163,33 +169,33 @@ class SampleBuilder {
 // PLAYBACK
 const playing = [];
 const samples = [];
-const findSample = note => {
+const findSample = key => {
     if (samples.length === 0) return;
     for (let i = samples.length - 1; i >= 0; --i) {
         const lowestKey = samples[i].lowestKey;
-        if (note >= lowestKey) {
-            // if (note > keyRange.hi) {
-            //     console.warn(`lo: ${keyRange.lo}, note: ${note}, high: ${keyRange.hi} (is outside the range)`)
+        if (key >= lowestKey) {
+            // if (key > keyRange.hi) {
+            //     console.warn(`lo: ${keyRange.lo}, key: ${key}, high: ${keyRange.hi} (is outside the range)`)
             // }
             return samples[i];
         }
     }
     return samples[0];
 };
-const noteOn = (note, velocity) => {
-    // console.log(`noteOn note: ${note}, velocity: ${velocity}`);
-    const sample = findSample(note);
+const noteOn = (key, velocity) => {
+    // console.log(`noteOn note: ${key}, velocity: ${velocity}`);
+    const sample = findSample(key);
     if (!sample) {
-        console.warn(`Could not find sample for ${note}`);
+        console.warn(`Could not find sample for ${key}`);
         return;
     }
-    playing[note] = sample.play(masterGain, note);
+    playing[key] = sample.play(masterGain, key);
 };
-const noteOff = (note) => {
+const noteOff = (key) => {
     // console.log(`noteOff note: ${note}`);
-    if (playing[note]) {
-        playing[note]();
-        delete playing[note];
+    if (playing[key]) {
+        playing[key]();
+        delete playing[key];
     }
 };
 
@@ -200,15 +206,51 @@ Midi.request().then(midi => {
 });
 SoftwareKeyboard.init((note, velocity) => noteOn(note, velocity), note => noteOff(note));
 
+class SampleList {
+    constructor(tableElement) {
+        this.tableElement = tableElement;
+    }
+
+    clear() {
+        this.tableElement.querySelectorAll("tr:not([header])").forEach(entry => entry.remove());
+    }
+
+    build() {
+        const createValueCell = (tableRowElement, sample, textContent) => {
+            const cellElement = document.createElement("td");
+            cellElement.textContent = textContent;
+            tableRowElement.appendChild(cellElement);
+        };
+        for (let i = 0; i < samples.length; i++) {
+            const sample = samples[i];
+            const tableRowElement = document.createElement("tr");
+
+            createValueCell(tableRowElement, sample, `#${sample.lowestKey}`);
+            createValueCell(tableRowElement, sample, `${sample.name}`);
+            createValueCell(tableRowElement, sample, `${sample.numFrames}`);
+            createValueCell(tableRowElement, sample, `${sample.rootKey}`);
+            createValueCell(tableRowElement, sample, `${sample.rootFineTune}`);
+            createValueCell(tableRowElement, sample, `${sample.loopStart}`);
+            createValueCell(tableRowElement, sample, `${sample.loopEnd}`);
+            createValueCell(tableRowElement, sample, `${sample.loopEnabled ? 'On' : 'Off'}`);
+            createValueCell(tableRowElement, sample, `${sample.sampleRate}`);
+
+            this.tableElement.appendChild(tableRowElement);
+        }
+    }
+}
+
+const sampleList = new SampleList(document.querySelector("table#sample-list"));
+
 const importInstrument = instrument => {
-    console.log(instrument);
+    sampleList.clear();
     samples.splice.apply(samples, [0, samples.length].concat(SampleBuilder.fromInstrument(instrument)));
+    sampleList.build();
 };
 
-
 const importSourcesSelect = document.querySelector("#input-sources");
-const instrumentOptionMap = new Map();
 const listInstruments = (fileName, instruments) => {
+    importSourcesSelect.firstElementChild?.remove();
     const list = document.createElement("optgroup");
     list.label = `💾 ${fileName}`;
     for (let i = 0; i < instruments.length; i++) {
@@ -218,19 +260,14 @@ const listInstruments = (fileName, instruments) => {
         console.log(`${i}: ${name} > ${numBytes >> 10}kb`);
         const option = document.createElement("option");
         option.textContent = `${name} (${numBytes >> 10}kb)`;
+        option.ondblclick = () => {
+            importSourcesSelect.selectedIndex = -1;
+            importSourcesSelect.blur();
+            importInstrument(instrument);
+        }
         list.appendChild(option);
-        instrumentOptionMap.set(option, instrument);
     }
     importSourcesSelect.prepend(list);
-};
-document.querySelector("#import-source").onclick = () => {
-    const option = importSourcesSelect.options[importSourcesSelect.selectedIndex];
-    if (-1 === importSourcesSelect.selectedIndex) return;
-    if (undefined === option) return;
-    const instrument = instrumentOptionMap.get(option);
-    document.querySelector("#instrument-name").textContent = instrument.header?.name;
-    importInstrument(instrument);
-    importSourcesSelect.selectedIndex = -1;
 };
 document.querySelector("#input-soundfont-file").oninput = event => {
     const target = event?.target;

@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <title>Sampler</title>
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="sampler.css">
     <script src="lib/SoundFont2.js"></script>
     <script src="sampler.js" type="module"></script>
 </head>
@@ -17,12 +18,23 @@
         <h5>Source</h5>
         <input type="file" id="input-soundfont-file"/>
         <select id="input-sources" size="32"></select>
-        <button id="import-source">Import</button>
     </div>
     <div class="editor">
         <div class="samples">
             <h5>Samples</h5>
-            <p style="text-align: center" id="instrument-name">No instrument</p>
+            <table id="sample-list">
+                <tr header>
+                    <th>Lowest Key</th>
+                    <th>Name</th>
+                    <th>Duration</th>
+                    <th>Root Key</th>
+                    <th>Root Tune</th>
+                    <th>Loop Start</th>
+                    <th>Loop End</th>
+                    <th>Loop</th>
+                    <th>SF</th>
+                </tr>
+            </table>
         </div>
         <div class="parameters">
             <h5>Parameter</h5>
