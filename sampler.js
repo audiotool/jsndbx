@@ -219,6 +219,7 @@ class SampleList {
         const createValueCell = (tableRowElement, sample, textContent) => {
             const cellElement = document.createElement("td");
             cellElement.textContent = textContent;
+            cellElement.contentEditable = "true";
             tableRowElement.appendChild(cellElement);
         };
         for (let i = 0; i < samples.length; i++) {

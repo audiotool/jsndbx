@@ -1,5 +1,5 @@
 import {ParameterBuilder} from "./parameter.js";
-import {Linear, Percent, LinearInt, PrintMapping, NoFloat, OneFloat} from "./mapping.js";
+import {Linear, LinearInt, NoFloat, OneFloat, Percent, PrintMapping} from "./mapping.js";
 import {Random} from "./neutrons.js";
 
 export class Sequencer {
@@ -486,10 +486,13 @@ export class SoftwareKeyboard {
     static init(onNoteOn, onNoteOff) {
         const active = [];
         window.addEventListener("keydown", event => {
-            if (event.repeat || event.shiftKey || event.altKey || event.ctrlKey || event.metaKey) {
+            if (event.repeat || event.shiftKey || event.altKey || event.ctrlKey || event.metaKey ||
+                event.target?.nodeName?.toUpperCase() === "INPUT" ||
+                event.target?.nodeName?.toUpperCase() === "TEXTAREA" ||
+                event.target?.isContentEditable) {
                 return;
             }
-            const keyIndex = SoftwareKeyboard.keyMap[event.key.toUpperCase()];
+            const keyIndex = SoftwareKeyboard.keyMap[event.key?.toUpperCase()];
             if (keyIndex === undefined || active[keyIndex]) {
                 return;
             }
@@ -497,7 +500,7 @@ export class SoftwareKeyboard {
             onNoteOn(keyIndex + 36, 1.0);
         }, false);
         window.addEventListener("keyup", event => {
-            const keyIndex = SoftwareKeyboard.keyMap[event.key.toUpperCase()];
+            const keyIndex = SoftwareKeyboard.keyMap[event.key?.toUpperCase()];
             if (keyIndex === undefined) {
                 return;
             }
