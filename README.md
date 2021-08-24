@@ -11,19 +11,21 @@
 * [Cymatics soundfonts](https://cymatics.fm/blogs/production/soundfonts)
 
 #### Manual
-* Choose soundfont file
-* Double click instrument in list
+1. Choose soundfont file
+2. Double-click instrument in list
+3. Play instrument with keyboard or midi-keyboard
+4. View/Edit sample values
 
 #### Todo
 * ~~Import soundfont~~
 * ~~Test playback~~
 * Sample editor
   * waveform
-  * key-range
-  * loop marker
-  * loop enabled
-  * root note
-  * root fine-tune
+  * ~~key-range~~
+  * ~~loop marker~~
+  * ~~loop enabled~~
+  * ~~root note~~
+  * ~~root fine-tune~~
   * flac
   * format
 * Preset editor
