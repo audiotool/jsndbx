@@ -2,7 +2,8 @@ table#sample-list {
   font-size: 9px;
 }
 table#sample-list tr.playing td {
-  background-color: #911;
+  border-radius: 0;
+  background-color: #1f545c;
 }
 table#sample-list td {
   padding-left: 4px;

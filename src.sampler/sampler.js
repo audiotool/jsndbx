@@ -1,6 +1,6 @@
-import {Policy} from "./modules/policy.js";
-import {Midi, SoftwareKeyboard} from "./modules/sequencing.js";
-import {PrintMapping, Value} from "./modules/value.js";
+import {Policy} from "../modules/policy.js";
+import {Midi, SoftwareKeyboard} from "../modules/sequencing.js";
+import {PrintMapping, Value} from "../modules/value.js";
 
 const context = Policy.newAudioContext();
 const masterGain = context.createGain();
@@ -32,9 +32,11 @@ class Sample {
         this.loopEnd = new Value(loopEnd | 0, PrintMapping.PositiveInteger);
         this.loopEnabled = new Value(loopEnabled | 0, PrintMapping.Boolean);
 
-        this.lazyBuffer = null;
+        this.playing = new Value(0, PrintMapping.PositiveInteger);
 
-        const invalidator = () => this.lazyBuffer = null;
+        this.optBuffer = null;
+
+        const invalidator = () => this.optBuffer = null;
         this.numFrames.addObserver(invalidator);
         this.sampleRate.addObserver(invalidator);
     }
@@ -57,7 +59,9 @@ class Sample {
             source.loopEnd = this.loopEnd.value / sampleRate;
             source.loop = true;
         }
+        source.onended = () => this.playing.value--;
         source.start(startTime);
+        this.playing.value++;
         return () => {
             const currentTime = context.currentTime;
             const endTime = currentTime + 0.1;
@@ -68,20 +72,20 @@ class Sample {
     }
 
     get buffer() {
-        if (null === this.lazyBuffer) {
+        if (null === this.optBuffer) {
             const numChannels = this.data.length;
             console.assert(0 < numChannels && numChannels <= 2);
-            this.lazyBuffer = context.createBuffer(numChannels, this.data[0].length, this.sampleRate.value);
+            this.optBuffer = context.createBuffer(numChannels, this.data[0].length, this.sampleRate.value);
             for (let channelIndex = 0; channelIndex < numChannels; channelIndex++) {
                 const shortArray = this.data[channelIndex];
                 const floatArray = new Float32Array(this.numFrames.value);
                 for (let frameIndex = 0; frameIndex < this.numFrames.value; frameIndex++) {
                     floatArray[frameIndex] = shortArray[frameIndex] / 0x7FFF;
                 }
-                this.lazyBuffer.copyToChannel(floatArray, channelIndex, 0);
+                this.optBuffer.copyToChannel(floatArray, channelIndex, 0);
             }
         }
-        return this.lazyBuffer;
+        return this.optBuffer;
     }
 
     dispose() {
@@ -94,7 +98,7 @@ class Sample {
         this.loopStart.dispose();
         this.loopEnd.dispose();
         this.loopEnabled.dispose();
-        this.lazyBuffer = null;
+        this.optBuffer = null;
     }
 }
 
@@ -244,7 +248,7 @@ const makeValueField = (element, value) => {
         element.addEventListener("keydown", onKeyDown);
         element.addEventListener("focusout", () => {
             element.removeEventListener("keydown", onKeyDown);
-            value.parse(oldString, element.textContent);
+            value.parse(element.textContent);
         }, {once: true});
     });
 };
@@ -269,13 +273,7 @@ class SampleList {
             const sample = samples[i];
             const tableRowElement = document.createElement("tr");
 
-            // if (i === 2) {
-            //     tableRowElement.classList.add("playing");
-            // }
-
             // TODO ReadOnly fields
-            // TODO Remove Value Observers
-            // TODO Highlight playing sample
 
             makeValueField(createValueCell(tableRowElement), sample.lowestKey);
             makeValueField(createValueCell(tableRowElement), sample.name);
@@ -287,6 +285,11 @@ class SampleList {
             makeValueField(createValueCell(tableRowElement), sample.loopEnabled);
             makeValueField(createValueCell(tableRowElement), sample.sampleRate);
 
+            sample.playing.addObserver(value => {
+                if (value.value) tableRowElement.classList.add("playing")
+                else tableRowElement.classList.remove("playing")
+            });
+
             this.tableElement.appendChild(tableRowElement);
         }
     }
@@ -296,7 +299,10 @@ const sampleList = new SampleList(document.querySelector("table#sample-list"));
 
 const importInstrument = instrument => {
     sampleList.clear();
-    samples.splice.apply(samples, [0, samples.length].concat(SampleBuilder.fromInstrument(instrument)));
+    while (samples.length) {
+        samples.pop().dispose();
+    }
+    samples.push.apply(samples, SampleBuilder.fromInstrument(instrument));
     sampleList.build();
 };
 
@@ -304,16 +310,12 @@ const importSourcesSelect = document.querySelector("#input-sources");
 const listInstruments = (fileName, instruments) => {
     importSourcesSelect.firstElementChild?.remove();
     const list = document.createElement("optgroup");
-    list.label = `💾 ${fileName}
-            `;
+    list.label = `💾 ${fileName}`;
     for (let i = 0; i < instruments.length; i++) {
         const instrument = instruments[i];
         const numBytes = instrument.zones.reduce((n, zone) => zone.sample.data.byteLength + n, 0);
         const name = instrument.header.name;
-        console.log(`${i}
-        : ${name}
-        > ${numBytes >> 10}
-            kb`);
+        console.log(`${i}: ${name} > ${numBytes >> 10}kb`);
         const option = document.createElement("option");
         option.textContent = `${name} (${numBytes >> 10}kb)`;
         option.ondblclick = () => {

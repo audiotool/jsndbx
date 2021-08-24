@@ -47,7 +47,7 @@ export class Value {
     }
 
     dispose() {
-        this._observers = [];
+        this._observers = null;
     }
 }
 
@@ -77,4 +77,5 @@ PrintMapping.LinearInt = (min, max) => {
     }, mapping.print);
 };
 PrintMapping.PositiveInteger = PrintMapping.LinearInt(0, Number.MAX_SAFE_INTEGER);
-PrintMapping.Boolean = new PrintMapping(string => -1 < ["true", "on", "1", "yes"].indexOf(string.toLowercase()), value => value ? "On" : "Off");
+PrintMapping.Boolean = new PrintMapping(string => -1 < ["true", "on", "1", "yes"].indexOf(string.toLowerCase()),
+    value => value ? "On" : "Off");
