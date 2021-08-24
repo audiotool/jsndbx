@@ -131,7 +131,7 @@ class SampleBuilder {
         for (const entry of sampleBuilders) {
             samples.push(entry[1].build());
         }
-        samples.sort((a, b) => a.lowestKey - b.lowestKey);
+        samples.sort((a, b) => a.lowestKey.value - b.lowestKey.value);
         let totalBytes = 0;
         for (let i = 0; i < samples.length; i++) {
             const memory = samples[i].memory;
