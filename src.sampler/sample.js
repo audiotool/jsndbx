@@ -30,8 +30,8 @@ export class Sample {
         this.sampleRate.addObserver(invalidator);
     }
 
-    play(output, note) {
-        const keyDifference = note - this.rootKey.value;
+    play(output, key) {
+        const keyDifference = key - this.rootKey.value;
         const playbackRate = Math.pow(2.0, keyDifference / 12.0 + this.rootFineTune.value / 1200.0);
         const gain = this.context.createGain();
         const source = this.context.createBufferSource();
@@ -92,44 +92,6 @@ export class Sample {
 }
 
 export class SampleBuilder {
-    static fromInstrument(context, instrument) {
-        console.log(`build ${instrument.header.name}`);
-        const zones = instrument.zones;
-        const sampleBuilders = new Map();
-        const samples = [];
-        for (let i = 0; i < zones.length; i++) {
-            const zone = zones[i];
-            let lowestKey = zone.keyRange?.lo;
-            if (lowestKey === undefined) {
-                console.warn(`${instrument.header.name} zone ${i} has no keyRange.`);
-                lowestKey = 0;
-            }
-            const sample = zone.sample;
-            const header = sample.header;
-            const sampleRate = header.sampleRate;
-            if (0 === sampleRate) {
-                continue;
-            }
-            let sampleBuilder = sampleBuilders.get(lowestKey);
-            if (undefined === sampleBuilder) {
-                sampleBuilder = new SampleBuilder(context, zone);
-                sampleBuilders.set(lowestKey, sampleBuilder);
-            }
-            sampleBuilder.push(sample);
-        }
-        for (const entry of sampleBuilders) {
-            samples.push(entry[1].make());
-        }
-        samples.sort((a, b) => a.lowestKey.value - b.lowestKey.value);
-        let totalBytes = 0;
-        for (let i = 0; i < samples.length; i++) {
-            const memory = samples[i].memory;
-            totalBytes += memory;
-        }
-        console.log(`${samples.length} samples allocating ${totalBytes >> 20}mb`);
-        return samples;
-    }
-
     constructor(context, zone) {
         this.context = context;
         this.zone = zone;

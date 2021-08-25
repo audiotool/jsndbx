@@ -1,6 +1,7 @@
 import {Policy} from "../modules/policy.js";
 import {Midi, SoftwareKeyboard} from "../modules/sequencing.js";
-import {Sample, SampleBuilder} from "./sample.js";
+import {Instrument} from "./instrument.js";
+import {ArrayPlotter} from "../modules/plotter.js";
 
 const context = Policy.newAudioContext();
 const masterGain = context.createGain();
@@ -12,30 +13,13 @@ window.onerror = event => {
     alert(`An error occurred. Please reload.`);
 };
 
+let instrument = null;
+
 // PLAYBACK
 const playing = [];
-const samples = [];
-const findSample = key => {
-    if (samples.length === 0) return;
-    for (let i = samples.length - 1; i >= 0; --i) {
-        const lowestKey = samples[i].lowestKey.value;
-        if (key >= lowestKey) {
-            // if (key > keyRange.hi) {
-            //     console.warn(`lo: ${keyRange.lo}, key: ${key}, high: ${keyRange.hi} (is outside the range)`)
-            // }
-            return samples[i];
-        }
-    }
-    return samples[0];
-};
 const noteOn = (key, velocity) => {
     // console.log(`noteOn note: ${key}, velocity: ${velocity}`);
-    const sample = findSample(key);
-    if (!sample) {
-        console.warn(`Could not find sample for ${key}`);
-        return;
-    }
-    playing[key] = sample.play(masterGain, key);
+    playing[key] = instrument?.play(masterGain, key);
 };
 const noteOff = (key) => {
     // console.log(`noteOff note: ${note}`);
@@ -88,21 +72,22 @@ class SampleList {
         this.tableElement.querySelectorAll("tr:not([header])").forEach(entry => entry.remove());
     }
 
-    build() {
+    build(instrument) {
         const createValueCell = (tableRowElement) => {
             const cellElement = document.createElement("td");
             cellElement.contentEditable = "true";
             tableRowElement.appendChild(cellElement);
             return cellElement;
         };
-        for (let i = 0; i < samples.length; i++) {
-            const sample = samples[i];
+        for (let i = 0; i < instrument.samples.length; i++) {
+            const sample = instrument.samples[i];
             const tableRowElement = document.createElement("tr");
 
             // TODO ReadOnly fields
 
             makeValueField(createValueCell(tableRowElement), sample.lowestKey);
             makeValueField(createValueCell(tableRowElement), sample.name);
+            createValueCell(tableRowElement).textContent = sample.data.length;
             makeValueField(createValueCell(tableRowElement), sample.numFrames);
             makeValueField(createValueCell(tableRowElement), sample.rootKey);
             makeValueField(createValueCell(tableRowElement), sample.rootFineTune);
@@ -121,15 +106,49 @@ class SampleList {
     }
 }
 
+class SampleWaveform {
+    constructor(wrapper) {
+        this.wrapper = wrapper;
+        this.canvas = wrapper.querySelector("canvas");
+        this.context = this.canvas.getContext("2d");
+        this.sample = null;
+    }
+
+    show(sample) {
+        this.sample = sample;
+        this.update();
+    }
+
+    update() {
+        const w = this.wrapper.clientWidth;
+        const h = this.wrapper.clientHeight;
+        this.canvas.width = w;
+        this.canvas.height = h;
+
+        if (null === this.sample) return;
+
+        this.context.fillStyle = "green";
+
+        const numChannels = this.sample.data.length;
+        for (let i = 0; i < numChannels; i++) {
+            ArrayPlotter.renderOversampled(this.context, this.sample.data[i],
+                0, w, h / numChannels * i, h / numChannels * (i + 1),
+                0, this.sample.numFrames.value, -0x7FFF, 0x7FFF);
+        }
+    }
+}
+
+const sampleWaveform = new SampleWaveform(document.querySelector("div#waveform"));
+sampleWaveform.update();
+
 const sampleList = new SampleList(document.querySelector("table#sample-list"));
 
-const importInstrument = instrument => {
+const importInstrument = format => {
     sampleList.clear();
-    while (samples.length) {
-        samples.pop().dispose();
-    }
-    samples.push.apply(samples, SampleBuilder.fromInstrument(context, instrument));
-    sampleList.build();
+    instrument?.dispose();
+    instrument = Instrument.fromFormat(context, format);
+    sampleList.build(instrument);
+    sampleWaveform.show(instrument.samples[0]);
 };
 
 const importSourcesSelect = document.querySelector("#input-sources");

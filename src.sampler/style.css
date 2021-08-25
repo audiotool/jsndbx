@@ -1,0 +1,72 @@
+.sampler {
+  display: flex;
+  flex-direction: row;
+  overflow: hidden;
+}
+.sampler * {
+  border-radius: 8px;
+}
+.sampler h5 {
+  text-transform: uppercase;
+  padding: 8px 0;
+  text-align: center;
+  background-color: #333;
+  border-radius: 6px 6px 0 0;
+}
+.sampler .source {
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 288px;
+  height: 100%;
+  background-color: #1A1A1A;
+}
+.sampler .source input {
+  margin: 0 0 8px 0;
+}
+.sampler .source select {
+  flex: 1 0 0;
+  width: 100%;
+}
+.sampler .editor {
+  margin: 0 0 0 2px;
+  display: flex;
+  flex-direction: column;
+  flex: 1 0 0;
+  height: 100%;
+}
+.sampler .editor .samples {
+  flex: 0 0 320px;
+  background-color: #1A1A1A;
+  margin: 0 0 2px 0;
+}
+.sampler .editor .parameters {
+  flex: 1 0 0;
+  background-color: #1A1A1A;
+}
+
+table#sample-list {
+  font-size: 9px;
+}
+table#sample-list tr.playing td {
+  border-radius: 0;
+  background-color: #1f545c;
+}
+table#sample-list td {
+  padding-left: 4px;
+  background-color: #111;
+}
+table#sample-list th {
+  background-color: #333;
+  text-align: left;
+  padding-left: 4px;
+  padding-right: 20px;
+  border-radius: 2px;
+}
+
+div#waveform {
+  height: 128px;
+  border-radius: 0;
+  background-color: #223;
+}
+
+/*# sourceMappingURL=style.css.map */

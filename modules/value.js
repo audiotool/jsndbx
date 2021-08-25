@@ -32,10 +32,13 @@ export class Value {
     }
 
     addObserver(observer) {
-        this._observers.push(observer);
+        this._observers?.push(observer);
     }
 
     removeObserver(observer) {
+        if (null === this._observers) {
+            return;
+        }
         const index = this._observers.indexOf(observer) | 0;
         if (-1 !== index) {
             this._observers.splice(index, 1);

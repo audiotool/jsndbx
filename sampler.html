@@ -4,15 +4,11 @@
     <meta charset="UTF-8">
     <title>Sampler</title>
     <link rel="stylesheet" href="styles.css">
-    <link rel="stylesheet" href="sampler.css">
+    <link rel="stylesheet" href="src.sampler/style.css">
     <script src="lib/SoundFont2.js"></script>
     <script src="src.sampler/main.js" type="module"></script>
 </head>
 <body>
-<header>
-    <h1>Audiotool</h1>
-    <h2>Sampler</h2>
-</header>
 <article class="center sampler">
     <div class="source">
         <h5>Source</h5>
@@ -22,10 +18,12 @@
     <div class="editor">
         <div class="samples">
             <h5>Samples</h5>
+            <div id="waveform"><canvas></canvas></div>
             <table id="sample-list">
                 <tr header>
                     <th>Lowest Key</th>
                     <th>Name</th>
+                    <th>Channels</th>
                     <th>Duration</th>
                     <th>Root Key</th>
                     <th>Root Tune</th>
