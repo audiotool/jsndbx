@@ -127,7 +127,7 @@ class SampleWaveform {
 
         if (null === this.sample) return;
 
-        this.context.fillStyle = "green";
+        this.context.fillStyle = "#888";
 
         const numChannels = this.sample.data.length;
         for (let i = 0; i < numChannels; i++) {
