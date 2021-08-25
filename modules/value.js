@@ -77,5 +77,6 @@ PrintMapping.LinearInt = (min, max) => {
     }, mapping.print);
 };
 PrintMapping.PositiveInteger = PrintMapping.LinearInt(0, Number.MAX_SAFE_INTEGER);
+PrintMapping.MidiNote = PrintMapping.LinearInt(0, 127);
 PrintMapping.Boolean = new PrintMapping(string => -1 < ["true", "on", "1", "yes"].indexOf(string.toLowerCase()),
     value => value ? "On" : "Off");
