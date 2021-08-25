@@ -95,6 +95,7 @@ class SampleList {
             makeValueField(createValueCell(tableRowElement), sample.loopEnd);
             makeValueField(createValueCell(tableRowElement), sample.loopEnabled);
             makeValueField(createValueCell(tableRowElement), sample.sampleRate);
+            createValueCell(tableRowElement).textContent = (sample.data.reduce((n, x) => n + x.byteLength, 0) >> 10) + 1;
 
             sample.numPlaying.addObserver(value => {
                 if (value.value) tableRowElement.classList.add("playing")
