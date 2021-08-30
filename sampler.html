@@ -2,44 +2,50 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Sampler</title>
-    <link rel="stylesheet" href="styles.css">
+    <title>SF-Editor</title>
     <link rel="stylesheet" href="src.sampler/style.css">
     <script src="lib/SoundFont2.js"></script>
     <script src="src.sampler/main.js" type="module"></script>
 </head>
 <body>
-<article class="center sampler">
-    <div class="source">
-        <h5>Source</h5>
-        <input type="file" id="input-soundfont-file"/>
-        <select id="input-sources" size="32"></select>
+<div class="source">
+    <h1>Import</h1>
+    <label class="browse">
+        <input type="file" id="input-file"/>
+        Browse SoundFont or Audiotool Font
+    </label>
+    <select id="input-sources" size="32"></select>
+</div>
+<div class="instrument">
+    <h1>Instrument</h1>
+    <h2>Waveform</h2>
+    <div id="waveform">
+        <canvas></canvas>
     </div>
-    <div class="editor">
-        <div class="samples">
-            <h5>Samples</h5>
-            <div id="waveform"><canvas></canvas></div>
-            <table id="sample-list">
-                <tr header>
-                    <th>Lowest Key</th>
-                    <th>Name</th>
-                    <th>Channels</th>
-                    <th>Duration</th>
-                    <th>Root Key</th>
-                    <th>Root Tune</th>
-                    <th>Loop Start</th>
-                    <th>Loop End</th>
-                    <th>Loop</th>
-                    <th>SF</th>
-                    <th>kb</th>
-                </tr>
-            </table>
-        </div>
-        <div class="parameters">
-            <h5>Parameter</h5>
-        </div>
+    <h2>Samples</h2>
+    <div class="table-wrapper">
+        <table id="sample-list">
+            <thead>
+            <tr>
+                <th><abbr title="Lowest Key">#</abbr></th>
+                <th>Name</th>
+                <th><abbr title="Channels">Ch</abbr></th>
+                <th><abbr title="Root Key">Key</abbr></th>
+                <th><abbr title="Root Tune">Tune</abbr></th>
+                <th>Duration</th>
+                <th>Loop Start</th>
+                <th>Loop End</th>
+                <th>Loop</th>
+                <th>SF</th>
+                <th>kb</th>
+            </tr>
+            </thead>
+        </table>
     </div>
-</article>
-<footer></footer>
+</div>
+<div class="save">
+    <h1>Save</h1>
+    <button>Download Audiotool Format</button>
+</div>
 </body>
 </html>

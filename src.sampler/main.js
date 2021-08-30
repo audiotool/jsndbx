@@ -18,11 +18,11 @@ let instrument = null;
 // PLAYBACK
 const playing = [];
 const noteOn = (key, velocity) => {
-    // console.log(`noteOn note: ${key}, velocity: ${velocity}`);
+    console.log(`noteOn note: ${key}, velocity: ${velocity}`);
     playing[key] = instrument?.play(masterGain, key);
 };
 const noteOff = (key) => {
-    // console.log(`noteOff note: ${note}`);
+    console.log(`noteOff note: ${key}`);
     if (playing[key]) {
         playing[key]();
         delete playing[key];
@@ -36,77 +36,6 @@ Midi.request().then(midi => {
 });
 SoftwareKeyboard.init((note, velocity) => noteOn(note, velocity), note => noteOff(note));
 
-const makeValueField = (element, value) => {
-    const update = () => element.textContent = value.print();
-    value.addObserver(_ => update());
-    update();
-    element.addEventListener("focusin", () => {
-        const selection = window.getSelection();
-        const range = document.createRange();
-        range.selectNodeContents(element);
-        selection.removeAllRanges();
-        selection.addRange(range);
-        const oldString = value.print();
-        const onKeyDown = event => {
-            if (event.key === "Enter") {
-                element.blur();
-            } else if (event.key === "Escape") {
-                element.textContent = oldString;
-                element.blur();
-            }
-        };
-        element.addEventListener("keydown", onKeyDown);
-        element.addEventListener("focusout", () => {
-            element.removeEventListener("keydown", onKeyDown);
-            value.parse(element.textContent);
-        }, {once: true});
-    });
-};
-
-class SampleList {
-    constructor(tableElement) {
-        this.tableElement = tableElement;
-    }
-
-    clear() {
-        this.tableElement.querySelectorAll("tr:not([header])").forEach(entry => entry.remove());
-    }
-
-    build(instrument) {
-        const createValueCell = (tableRowElement) => {
-            const cellElement = document.createElement("td");
-            cellElement.contentEditable = "true";
-            tableRowElement.appendChild(cellElement);
-            return cellElement;
-        };
-        for (let i = 0; i < instrument.samples.length; i++) {
-            const sample = instrument.samples[i];
-            const tableRowElement = document.createElement("tr");
-
-            // TODO ReadOnly fields
-
-            makeValueField(createValueCell(tableRowElement), sample.lowestKey);
-            makeValueField(createValueCell(tableRowElement), sample.name);
-            createValueCell(tableRowElement).textContent = sample.data.length;
-            makeValueField(createValueCell(tableRowElement), sample.numFrames);
-            makeValueField(createValueCell(tableRowElement), sample.rootKey);
-            makeValueField(createValueCell(tableRowElement), sample.rootFineTune);
-            makeValueField(createValueCell(tableRowElement), sample.loopStart);
-            makeValueField(createValueCell(tableRowElement), sample.loopEnd);
-            makeValueField(createValueCell(tableRowElement), sample.loopEnabled);
-            makeValueField(createValueCell(tableRowElement), sample.sampleRate);
-            createValueCell(tableRowElement).textContent = (sample.data.reduce((n, x) => n + x.byteLength, 0) >> 10) + 1;
-
-            sample.numPlaying.addObserver(value => {
-                if (value.value) tableRowElement.classList.add("playing")
-                else tableRowElement.classList.remove("playing")
-            });
-
-            this.tableElement.appendChild(tableRowElement);
-        }
-    }
-}
-
 class SampleWaveform {
     constructor(wrapper) {
         this.wrapper = wrapper;
@@ -116,6 +45,9 @@ class SampleWaveform {
     }
 
     show(sample) {
+        if (this.sample === sample) {
+            return;
+        }
         this.sample = sample;
         this.update();
     }
@@ -140,7 +72,81 @@ class SampleWaveform {
 }
 
 const sampleWaveform = new SampleWaveform(document.querySelector("div#waveform"));
-sampleWaveform.update();
+
+const makeValueField = (element, value) => {
+    const update = () => element.textContent = value.print();
+    value.addObserver(_ => update());
+    update();
+    element.addEventListener("focusin", () => {
+        const selection = window.getSelection();
+        const range = document.createRange();
+        range.selectNodeContents(element);
+        selection.removeAllRanges();
+        selection.addRange(range);
+        const oldString = value.print();
+        const onKeyDown = event => {
+            if (event.key === "Enter") {
+                element.blur();
+            } else if (event.key === "Escape") {
+                element.textContent = oldString;
+                element.blur();
+            }
+        };
+        element.addEventListener("keydown", onKeyDown);
+        element.addEventListener("focusout", () => {
+            element.removeEventListener("keydown", onKeyDown);
+            value.parse(element.textContent);
+            window.getSelection().removeAllRanges();
+        }, {once: true});
+    });
+};
+
+class SampleList {
+    constructor(tableElement) {
+        this.tableElement = tableElement;
+        this.tableBody = this.tableElement.appendChild(document.createElement("tbody"));
+    }
+
+    clear() {
+        this.tableBody.querySelectorAll("tr").forEach(entry => entry.remove());
+    }
+
+    build(instrument) {
+        const createValueCell = (tableRowElement) => {
+            const cellElement = document.createElement("td");
+            cellElement.contentEditable = "true";
+            tableRowElement.appendChild(cellElement);
+            return cellElement;
+        };
+        for (let i = 0; i < instrument.samples.length; i++) {
+            const sample = instrument.samples[i];
+            const tableRowElement = document.createElement("tr");
+
+            tableRowElement.addEventListener("focusin", () => sampleWaveform.show(sample));
+
+            // TODO ReadOnly fields
+
+            makeValueField(createValueCell(tableRowElement), sample.lowestKey);
+            makeValueField(createValueCell(tableRowElement), sample.name);
+            createValueCell(tableRowElement).textContent = sample.data.length;
+            makeValueField(createValueCell(tableRowElement), sample.rootKey);
+            makeValueField(createValueCell(tableRowElement), sample.rootFineTune);
+            makeValueField(createValueCell(tableRowElement), sample.numFrames);
+            makeValueField(createValueCell(tableRowElement), sample.loopStart);
+            makeValueField(createValueCell(tableRowElement), sample.loopEnd);
+            makeValueField(createValueCell(tableRowElement), sample.loopEnabled);
+            makeValueField(createValueCell(tableRowElement), sample.sampleRate);
+            createValueCell(tableRowElement).textContent = (sample.data.reduce((n, x) => n + x.byteLength, 0) >> 10) + 1;
+
+            sample.numPlaying.addObserver(value => {
+                if (value.value) tableRowElement.classList.add("playing")
+                else tableRowElement.classList.remove("playing")
+            });
+
+            this.tableBody.appendChild(tableRowElement);
+        }
+    }
+}
 
 const sampleList = new SampleList(document.querySelector("table#sample-list"));
 
@@ -149,7 +155,6 @@ const importInstrument = format => {
     instrument?.dispose();
     instrument = Instrument.fromFormat(context, format);
     sampleList.build(instrument);
-    sampleWaveform.show(instrument.samples[0]);
 };
 
 const importSourcesSelect = document.querySelector("#input-sources");
@@ -173,7 +178,7 @@ const listInstruments = (fileName, instruments) => {
     }
     importSourcesSelect.prepend(list);
 };
-document.querySelector("#input-soundfont-file").oninput = event => {
+document.querySelector("#input-file").oninput = event => {
     const target = event?.target;
     if (target === undefined) return;
     const files = target?.files;
@@ -200,3 +205,12 @@ document.querySelector("#input-soundfont-file").oninput = event => {
     fileReader.onerror = () => complete(null);
     fileReader.readAsArrayBuffer(file);
 }
+document.querySelector(".save button").onclick = () => alert("Not yet implemented");
+if (location.hostname === "localhost")
+    fetch("files/soundfont/cms fat saw.sf2")
+        .then(x => x.arrayBuffer())
+        .then(x => {
+            const instruments = SoundFont2.SoundFont2.from(new Uint8Array(x)).instruments;
+            listInstruments("local", instruments);
+            importInstrument(instruments[0]);
+        });
